@@ -1,0 +1,100 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Product",
+      "description": "CHORSU BURGER menyusidagi mahsulot",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 100 },
+        "name": { "type": "string", "maxLength": 100 },
+        "category": { "type": "string", "maxLength": 50 },
+        "price": { "type": "integer" },
+        "imageUrl": { "type": "string", "maxLength": 1000 },
+        "description": { "type": "string", "maxLength": 500 },
+        "available": { "type": "boolean" },
+        "sortOrder": { "type": "integer" },
+        "isPriceConfirmed": { "type": "boolean" }
+      },
+      "required": ["id", "name", "category", "price", "imageUrl", "available", "sortOrder"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Mijoz buyurtmasi",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 100 },
+        "orderNumber": { "type": "string", "maxLength": 20 },
+        "customerName": { "type": "string", "maxLength": 100 },
+        "customerPhone": { "type": "string", "maxLength": 30 },
+        "deliveryType": { "type": "string", "enum": ["pickup", "delivery"] },
+        "deliveryAddress": { "type": "string", "maxLength": 500 },
+        "notes": { "type": "string", "maxLength": 500 },
+        "paymentMethod": { "type": "string", "enum": ["cash", "card"] },
+        "items": { "type": "array" },
+        "itemsCount": { "type": "integer" },
+        "subtotal": { "type": "integer" },
+        "deliveryFee": { "type": "integer" },
+        "totalPrice": { "type": "integer" },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "accepted", "preparing", "ready", "completed", "cancelled"]
+        },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "customerId": { "type": "string", "maxLength": 128 }
+      },
+      "required": ["id", "orderNumber", "customerName", "customerPhone", "deliveryType", "paymentMethod", "items", "totalPrice", "status"]
+    },
+    "UserRole": {
+      "title": "UserRole",
+      "description": "Foydalanuvchi roli (customer, cook, admin)",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 150 },
+        "role": { "type": "string", "enum": ["customer", "cook", "admin"] },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "email", "role"]
+    },
+    "RestaurantSettings": {
+      "title": "RestaurantSettings",
+      "description": "Restoran asosiy sozlamalari",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "maxLength": 100 },
+        "slogan": { "type": "string", "maxLength": 150 },
+        "address": { "type": "string", "maxLength": 250 },
+        "phone": { "type": "string", "maxLength": 30 },
+        "workingHours": { "type": "string", "maxLength": 100 },
+        "deliveryFee": { "type": "integer" },
+        "minOrderAmount": { "type": "integer" },
+        "isOrderingActive": { "type": "boolean" },
+        "mapUrl": { "type": "string", "maxLength": 500 }
+      },
+      "required": ["name", "phone", "address", "isOrderingActive"]
+    }
+  },
+  "firestore": {
+    "/products/{productId}": {
+      "schema": "Product",
+      "description": "Menyudagi mahsulotlar kolleksiyasi"
+    },
+    "/orders/{orderId}": {
+      "schema": "Order",
+      "description": "Barcha buyurtmalar ro‘yxati"
+    },
+    "/userRoles/{userId}": {
+      "schema": "UserRole",
+      "description": "Foydalanuvchilarning rollari"
+    },
+    "/admins/{userId}": {
+      "schema": "UserRole",
+      "description": "Admin ro‘yxati"
+    },
+    "/settings/{settingId}": {
+      "schema": "RestaurantSettings",
+      "description": "Restoran umumiy sozlamalari"
+    }
+  }
+}

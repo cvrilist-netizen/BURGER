@@ -1,0 +1,82 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net: default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isBootstrappedAdmin() {
+      return isSignedIn() && request.auth.token.email == 'cvrilist@gmail.com';
+    }
+
+    function isAdmin() {
+      return isBootstrappedAdmin() || (isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+    }
+
+    function isCook() {
+      return isAdmin() || (isSignedIn() && exists(/databases/$(database)/documents/userRoles/$(request.auth.uid)) && get(/databases/$(database)/documents/userRoles/$(request.auth.uid)).data.role == 'cook');
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Products: public readable for menu, admin writable
+    match /products/{productId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Settings: public readable (hours, contact, delivery fee), admin writable
+    match /settings/{settingId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // User roles: read by owner/staff, written by admin or customer self-registration
+    match /userRoles/{userId} {
+      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin() || isCook());
+      allow create: if isSignedIn() && (
+        isAdmin() || 
+        (request.auth.uid == userId && incoming().role == 'customer')
+      );
+      allow update: if isSignedIn() && isAdmin();
+      allow delete: if isSignedIn() && isAdmin();
+    }
+
+    // Admins marker collection
+    match /admins/{userId} {
+      allow read: if isSignedIn();
+      allow write: if isBootstrappedAdmin() || isAdmin();
+    }
+
+    // Orders: public creation and tracking by ID; list restricted to staff or owner
+    match /orders/{orderId} {
+      allow get: if true;
+      allow list: if isAdmin() || isCook() || (isSignedIn() && resource.data.customerId == request.auth.uid);
+      allow create: if isValidId(orderId) 
+        && incoming().keys().hasAll(['id', 'orderNumber', 'customerName', 'customerPhone', 'deliveryType', 'paymentMethod', 'items', 'totalPrice', 'status'])
+        && incoming().status == 'pending'
+        && incoming().customerName is string && incoming().customerName.size() > 0 && incoming().customerName.size() <= 100
+        && incoming().customerPhone is string && incoming().customerPhone.size() > 0 && incoming().customerPhone.size() <= 30
+        && incoming().totalPrice is int && incoming().totalPrice >= 0;
+      allow update: if isAdmin() || (
+        isCook() && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt'])
+      );
+      allow delete: if isAdmin();
+    }
+  }
+}

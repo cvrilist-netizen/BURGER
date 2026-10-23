@@ -1,0 +1,6 @@
+{
+  "name": "CHORSU BURGER - Fast Food Buyurtma Tizimi",
+  "description": "CHORSU BURGER - Namangan Chorsu dehqon bozori. Mazali burgerlar, hot-doglar, lavashlar va KFC real-vaqt buyurtma tizimi.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
